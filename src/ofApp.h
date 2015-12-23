@@ -2,7 +2,10 @@
 
 #include "ofMain.h"
 #include "ofxPostGlitch.h"
-#include "fft.hpp"
+#include "fft.h"
+#include "ofxGui.h"
+
+#define numVids 11
 
 class ofApp : public ofBaseApp{
 public:
@@ -20,8 +23,6 @@ public:
     void mouseDragged(int x, int y, int button);
     void mousePressed(int x, int y, int button);
     void mouseReleased(int x, int y, int button);
-    void mouseEntered(int x, int y);
-    void mouseExited(int x, int y);
     void windowResized(int w, int h);
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
@@ -30,21 +31,29 @@ public:
     
     
     
-    ofFbo rgbaFbo;
-    ofFbo rgbaFboFloat;
+    // buffers
+    ofFbo fbo_00;
+    ofFbo fbo_01;
     ofFbo fbo_02;
     
-    ofVideoPlayer intro_0;
-    ofBoxPrimitive box;
     
-    //  glitch
+    // videos
+    ofVideoPlayer vid[numVids];
+    
+    
+    ofEasyCam cam;
+    ofBoxPrimitive box;
+    ofVbo spectrumBar;
+    ofMesh Icosa;
+    
+    
+    //  glitchs
     ofxPostGlitch	myGlitch_00;
     ofxPostGlitch	myGlitch_01;
     ofxPostGlitch	myGlitch_02;
     
     
-    
-    // *****    sounds  *****    
+    // sounds
     //左右2chのFFTの入出力の値を確保
     float *input;
     float *magnitude, *phase, *power;
@@ -53,7 +62,18 @@ public:
     //バッファーサイズとFFTサイズ
     int buffer_size;
     int fft_size;
+    //FFTクラスのインスタンス
+    fft myfft;
     
-    fft myfft; //FFTクラスのインスタンス
+    
+    // GUI
+    ofxPanel gui;
+    ofxFloatSlider radius;
+    ofxColorSlider color;
+    ofxVec2Slider position;
+    
+    //    ofQuaternion latRot[512];
+    //    ofQuaternion longRot[512];
+    //    ofQuaternion spinQuat[512];
     
 };

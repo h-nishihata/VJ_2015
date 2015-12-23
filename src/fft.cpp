@@ -30,7 +30,7 @@
  
  **********************************************************************/
 
-#include "fft.hpp"
+#include "fft.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -439,7 +439,7 @@ void fft::powerSpectrum(int start, int half, float *data, int windowSize,float *
     *(avg_power) = total_power / (float) half;
     
     delete[]in_real;
-    delete[]in_img;
+    delete[]in_img;   
     delete[]out_real;
     delete[]out_img;
 }
@@ -455,13 +455,13 @@ void fft::inversePowerSpectrum(int start, int half, int windowSize, float *final
     float *out_img = new float[windowSize];
     
     /* get real and imag part */
-    for (i = 0; i < half; i++) {
+    for (i = 0; i < half; i++) {	
         in_real[i] = magnitude[i]*cos(phase[i]);
         in_img[i]  = magnitude[i]*sin(phase[i]);
     }
     
     /* zero negative frequencies */
-    for (i = half; i < windowSize; i++) {
+    for (i = half; i < windowSize; i++) {	
         in_real[i] = 0.0;
         in_img[i] = 0.0;
     }
@@ -474,7 +474,7 @@ void fft::inversePowerSpectrum(int start, int half, int windowSize, float *final
     }
     
     delete[]in_real;
-    delete[]in_img;
+    delete[]in_img;   
     delete[]out_real;
     delete[]out_img;
 }
