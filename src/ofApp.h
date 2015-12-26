@@ -6,6 +6,8 @@
 #include "ofxGui.h"
 
 #define numVids 11
+#define numFbos 12
+#define numCams 3
 
 class ofApp : public ofBaseApp{
 public:
@@ -16,6 +18,15 @@ public:
     void drawFboTest_00();
     void drawFboTest_01();
     void drawFboTest_02();
+    void drawFboTest_03();
+    void drawFboTest_04();
+    void drawFboTest_05();
+    void drawFboTest_06();
+    void drawFboTest_07();
+    void drawFboTest_08();
+    void drawFboTest_09();
+    void drawFbo_Final();
+    void drawFbo_GUI();
     
     void keyPressed  (int key);
     void keyReleased(int key);
@@ -29,28 +40,57 @@ public:
     
     void audioIn(float* input, int bufferSize, int nChannels);
     
+
     
+    ofFbo fbo[numFbos];
     
-    // buffers
-    ofFbo fbo_00;
-    ofFbo fbo_01;
-    ofFbo fbo_02;
+    ofCamera cam[numCams];
+    ofNode testNode[numCams];
+    ofNode testController[numCams];
     
-    
-    // videos
     ofVideoPlayer vid[numVids];
+    int vidState;
     
     
-    ofEasyCam cam;
-    ofBoxPrimitive box;
-    ofVbo spectrumBar;
-    ofMesh Icosa;
+    
+    int pos[10];
+    int posHeight[10];
+    int width[10];
+    int width_[10];
+    int vel[10];
+    int rectLength;
+
+    int r[10];
+    int g[10];
+    int b[10];
+    int elapsedTime[10];
+    int lastingTime[10];
+    
+    
+    bool zFlag;
+    int camPosX, camPosY, camPosZ;
+    int yawDegree;
+    int totalYaw;
+    bool yawFlag;
+    
+    ofBoxPrimitive arrayBox;
+    int arrayBoxSize;
+    
+    ofBoxPrimitive waveBox;
+    int boxZPos[512];
+    int transZPos[512];
+    
+    ofBoxPrimitive sphereBox;
+    float sphereSize;
+    
+    
+//    int watchDog;
+    
     
     
     //  glitchs
-    ofxPostGlitch	myGlitch_00;
-    ofxPostGlitch	myGlitch_01;
-    ofxPostGlitch	myGlitch_02;
+    ofxPostGlitch myGlitch;
+    ofxPostGlitch guiGlitch;
     
     
     // sounds
@@ -69,11 +109,6 @@ public:
     // GUI
     ofxPanel gui;
     ofxFloatSlider radius;
-    ofxColorSlider color;
-    ofxVec2Slider position;
-    
-    //    ofQuaternion latRot[512];
-    //    ofQuaternion longRot[512];
-    //    ofQuaternion spinQuat[512];
+    ofxToggle setFboActive[numFbos];
     
 };
