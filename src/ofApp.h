@@ -5,7 +5,7 @@
 #include "fft.h"
 #include "ofxGui.h"
 
-#define numVids 11
+//#define numVids 11
 #define numFbos 12
 #define numCams 3
 
@@ -48,30 +48,35 @@ public:
     ofNode testNode[numCams];
     ofNode testController[numCams];
     
-    ofVideoPlayer vid[numVids];
-    int vidState;
+    ofVideoPlayer vid;
     
     
+    //  strokes
+    ofVec3f previous, current;
+    deque<ofVec3f> pathVertices;
+    ofMesh pathLines;
+    int thickness = 10;
     
-    int pos[10];
-    int posHeight[10];
-    int width[10];
-    int width_[10];
-    int vel[10];
+    // rect
+    int pos[10], posHeight[10], width[10], width_[10], vel[10];
     int rectLength;
 
-    int r[10];
-    int g[10];
-    int b[10];
-    int elapsedTime[10];
-    int lastingTime[10];
+    int r[10], g[10], b[10];
+    int elapsedTime[10], lastingTime[10];
     
+    // growing stripes
+    int translateX, translateY;
+    int rotAng;
+    int barScale;
+    int barR, barG, barB;
     
+    // spectrumboxes
     bool zFlag;
     int camPosX, camPosY, camPosZ;
-    int yawDegree;
-    int totalYaw;
+    int yawDegree, totalYaw;
     bool yawFlag;
+    
+    ofBoxPrimitive trailBox;
     
     ofBoxPrimitive arrayBox;
     int arrayBoxSize;
@@ -108,7 +113,9 @@ public:
     
     // GUI
     ofxPanel gui;
-    ofxFloatSlider radius;
-    ofxToggle setFboActive[numFbos];
+    ofxIntSlider vidState;
+    ofxIntSlider sensitivity;
+    ofxFloatSlider vidSpeed;
+    bool setFboActive[numFbos];
     
 };

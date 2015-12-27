@@ -9,16 +9,18 @@ void ofApp::setup(){
     
     
     // videos
-    char str[6];
-    for (int i=0; i<numVids; i++) {
-        sprintf(str, "%1d.mov", i);
-        vid[i].loadMovie(str);
-        vid[i].setLoopState(OF_LOOP_NORMAL);
-    }
+    vid.loadMovie("merged.mov");
+    vid.play();
     
+    
+    // GUI buffer
+    fbo[numFbos-1].allocate(1440, 900, GL_RGBA);
+    fbo[numFbos-1].begin();
+    ofClear(255,255,255, 0);
+    fbo[numFbos-1].end();
     
     // buffers
-    for (int i=0; i<numFbos; i++) {
+    for (int i=0; i<numFbos-1; i++) {
         
         fbo[i].allocate(1024, 768, GL_RGBA);
         fbo[i].begin();
@@ -30,11 +32,11 @@ void ofApp::setup(){
     
     // cameras & nodes
     camPosX = camPosY = 300;
-    camPosZ = 100;
+    camPosZ = -200;
     
     
     //  3D boxes
-    testNode[0].setPosition(500, 500, 100);
+    testNode[0].setPosition(200, 200, 400);
     testController[0].setPosition(0, 0, 0);
     cam[0].setPosition(camPosX, camPosY, camPosZ);
     cam[0].setParent(testController[0]);
@@ -52,7 +54,63 @@ void ofApp::setup(){
     cam[2].setParent(testController[2]);
     
     
+    
     arrayBoxSize = ofRandom(20)+1;
+    
+    for (int i=0; i<10; i++) {
+        r[i] = ofRandom(255);
+        g[i] = ofRandom(255);
+        b[i] = ofRandom(255);
+        
+        pos [i] = ofRandom(ofGetWidth());
+        posHeight [i] = ofRandom(ofGetHeight())-200;
+        width[i] = ofRandom(300)+10;
+        width_[i] = ofRandom(400)+50;
+        vel[i] = ofRandom(100)-50;
+        lastingTime[i] = ofRandom(50);
+    }
+    
+    translateX = 0;
+    translateY = 200;
+    rotAng = -45;
+    barScale = 1;
+    barR = 50;
+    barG = 255;
+    barB = 180;
+    
+    cam[2].setPosition(current.x, current.y+50, current.z-80);
+    cam[2].lookAt(current);
+    previous = current;
+    
+    float t = (2 + ofGetElapsedTimef()) * .2;
+    current.x = ofSignedNoise(t, 0, 0);
+    current.y = ofSignedNoise(0, t, 0);
+    current.z = ofSignedNoise(0, 0, t);
+    current *= 800;
+    
+    pathVertices.push_back(current);
+    while(pathVertices.size() > 200) {
+        pathVertices.pop_front();
+    }
+    
+    pathLines.clear();
+    for(unsigned int i = 0; i < pathVertices.size(); i++) {
+        ofVec3f thisPoint = pathVertices[i];
+        ofVec3f nextPoint = pathVertices[i+1];
+        ofVec3f direction = (nextPoint - thisPoint);
+        float distance = direction.length();
+        ofVec3f unitDirection = direction.normalized();
+        
+        ofVec3f toTheLeft = unitDirection.getRotated(90, ofVec3f(0, 1, 1));
+        ofVec3f toTheRight = unitDirection.getRotated(-90, ofVec3f(0, 1, 1));
+        
+        ofVec3f leftPoint = thisPoint+toTheLeft * thickness;
+        ofVec3f rightPoint = thisPoint+toTheRight * thickness;
+        pathLines.addVertex(ofVec3f(leftPoint.x, leftPoint.y, leftPoint.z));
+        pathLines.addVertex(ofVec3f(rightPoint.x, rightPoint.y, rightPoint.z));
+        int n = pathLines.getNumColors();
+    }
+
     
     
     // glitchs
@@ -76,12 +134,9 @@ void ofApp::setup(){
     
     // GUI
     gui.setup();
-    gui.add(radius.setup("radius", 200, 0, 400));
-    for (int i=0; i<numFbos-2; i++) {
-        gui.add(setFboActive[i].setup("fbo", false));
-    }
-    //    gui.add(color.setup("color", initColor, minColor, maxColor));
-    //    gui.add(position.setup("position", initPos, minPos, maxPos));
+    gui.add(vidState.setup("video state : ", 0, 0, 3));
+    gui.add(vidSpeed.setup("video speed : ", 1.0, 0.1, 5.0));
+    gui.add(sensitivity.setup("sensitivity : ", 10, 0, 100));
     
 }
 
@@ -91,14 +146,32 @@ void ofApp::update(){
     ofEnableAlphaBlending();
     
     // videos
-    if(ofGetKeyPressed('0')){
-        vidState = 0;
-    }else if(ofGetKeyPressed('9')){
-        vidState = 9;
-    }
-    vid[vidState].play();
-    vid[vidState].update();
+    vid.update();
+    vid.setSpeed(vidSpeed);
     
+    if (vidState == 0) {
+        // intro
+        if (vid.getPosition()*vid.getDuration() >= 39.0) {
+            vid.setPosition((int)0/202.2);
+        }
+        
+    }else if (vidState == 1) {
+        // mid
+        if (vid.getPosition()*vid.getDuration() >= 86.0) {
+            vid.setPosition((int)40.0/202.2);
+        }
+        
+    }else if (vidState == 2) {
+        // main 1
+        if (vid.getPosition()*vid.getDuration() >= 121.0) {
+            vid.setPosition((int)86.0/202.2);
+        }
+    }else if (vidState == 3) {
+        // main 2
+        if (vid.getPosition()*vid.getDuration() >= 202.0) {
+            vid.setPosition((int)121.0/202.2);
+        }
+    }
     
     // final output
     setFboActive[numFbos-2] = true;
@@ -141,70 +214,55 @@ void ofApp::update(){
                 cam[t].setPosition(camPosX, camPosY, camPosZ);
             }
             
-//            watchDog ++;
-//            if (watchDog < 5) { //  safe :)
+            //            watchDog ++;
+            //            if (watchDog < 5) { //  safe :)
             
-                fbo[i].begin();
-                switch (i) {
-                    case 0:
-                        drawFboTest_00();
-                        break;
-                    case 1:
-                        drawFboTest_01();
-                        break;
-                    case 2:
-                        drawFboTest_02();
-                        break;
-                    case 3:
-                        drawFboTest_03();
-                        break;
-                    case 4:
-                        drawFboTest_04();
-                        break;
-                    case 5:
-                        drawFboTest_05();
-                        break;
-                    case 6:
-                        drawFboTest_06();
-                        break;
-                    case 7:
-                        drawFboTest_07();
-                        break;
-                    case 8:
-                        drawFboTest_08();
-                        break;
-                    case 9:
-                        drawFboTest_09();
-                        break;
-                    case numFbos-2:
-                        drawFbo_Final();
-                        break;
-                    case numFbos-1:
-                        drawFbo_GUI();
-                        break;
-                }
-                fbo[i].end();
-                
-//            }
+            fbo[i].begin();
+            switch (i) {
+                case 0:
+                    drawFboTest_00();
+                    break;
+                case 1:
+                    drawFboTest_01();
+                    break;
+                case 2:
+                    drawFboTest_02();
+                    break;
+                case 3:
+                    drawFboTest_03();
+                    break;
+                case 4:
+                    drawFboTest_04();
+                    break;
+                case 5:
+                    drawFboTest_05();
+                    break;
+                case 6:
+                    drawFboTest_06();
+                    break;
+                case 7:
+                    drawFboTest_07();
+                    break;
+                case 8:
+                    drawFboTest_08();
+                    break;
+                case 9:
+                    drawFboTest_09();
+                    break;
+                case numFbos-2:
+                    drawFbo_Final();
+                    break;
+                case numFbos-1:
+                    drawFbo_GUI();
+                    break;
+            }
+            fbo[i].end();
+            
+            //            }
         }
     }
-
-//    watchDog = 0;
-
     
-    for (int i=0; i<10; i++) {
-        r[i] = ofRandom(255);
-        g[i] = ofRandom(255);
-        b[i] = ofRandom(255);
-        
-        pos [i] = ofRandom(ofGetWidth());
-        posHeight [i] = ofRandom(ofGetHeight())-200;
-        width[i] = ofRandom(300)+10;
-        width_[i] = ofRandom(400)+50;
-        vel[i] = ofRandom(100)-50;
-        lastingTime[i] = ofRandom(50);
-    }
-    
+    //    watchDog = 0;
     
     // sounds
     avg_power = 0.0;
@@ -218,26 +276,61 @@ void ofApp::drawFboTest_00(){
     /*****      videos     *****/
     
     ofClear(255,255,255, 0);
-    vid[vidState].draw(0, 0, 1024, 768);
+    vid.draw(0, 0, 1024, 768);
     
     
 }
 
 //--------------------------------------------------------------
 void ofApp::drawFboTest_01(){
+
+    /*    trail
     
-    ofClear(255,255,255, 0);
+    ofClear(255, 255, 255, 0);
+
+    
+    cam[3].begin();
+    
+    //  trail
+    ofSetLineWidth(2);
+    ofSetColor(255);
+    pathLines.draw();
+    
+    //  box
+    string str = ofToString(current, 2);
+    ofDrawBitmapString(str, current);
+    ofTranslate(current);
+    ofRotateX(current.x*.5);
+    ofRotateY(current.y*.5);
+    ofRotateZ(current.z*.5);
+    trailBox.set(8+magnitude[20]*10);
+    trailBox.draw();
+    
+    //  frames
+    ofNoFill();
+    ofSetLineWidth(8);
+    ofRect(-15, -15, 30, 30);
+    ofRotateZ(10);
+    ofSetLineWidth(5);
+    ofRect(-25, -25, 50, 50);
+
+    ofFill();
+    ofSetColor(255, 0, 0);
+    testNode[3].setScale(5);
+    testNode[3].draw();
+    
+    cam[3].end();
+    */
     
     /* 2D spectrum bars
-     float w = (float)ofGetWidth()/ (float)fft_size / 2.0f;
-     for (int i = 0; i < fft_size; i++) {
+    float w = (float)ofGetWidth()/ (float)fft_size / 2.0f;
+    for (int i = 0; i < fft_size; i++) {
      
-     float h = magnitude[i] * ofGetHeight();
-     ofRect(400/2 - w * i, 400/2, w, h);
-     ofRect(400/2 + w * i, 400/2, w, -h);
-     }
-     */
-    
+        float h = magnitude[i] * ofGetHeight();
+        ofRect(400/2 - w * i, 400/2, w, h);
+        ofRect(400/2 + w * i, 400/2, w, -h);
+    }
+    */
 }
 
 //--------------------------------------------------------------
@@ -371,25 +464,42 @@ void ofApp::drawFboTest_05(){
     ofClear(255,255,255, 0);
     
     elapsedTime[0]++;
-    ofRotate(-45);
-    ofTranslate(ofGetWidth()/4, ofGetHeight()/2);
+    ofTranslate(translateX, translateY);
+    ofRotate(rotAng);
+    ofScale(barScale, barScale);
+    ofSetColor(barR, barG, barB);
     
-    if(elapsedTime[0] > lastingTime[0]){
+    if(elapsedTime[0] < lastingTime[0]){
+        
+        for (int i = 0; i < 10; i++) {
+            ofRect(i*30, 0, 15, 30 + rectLength);
+        }
+        
+        rectLength+=10;
+        if(rectLength > 500){
+            rectLength = 0;
+        }
+        
+    }else{
+        
         elapsedTime[0] = 0;
-        ofTranslate(ofRandom(-700), ofRandom(-450));
-        ofScale(5, 5);
+        translateX = ofRandom(-200);
+        translateY = ofRandom(-200);
+        
+        if(ofRandom(10) > 4.5){
+            rotAng *= -1;
+            barR = 50;
+            barG = 255;
+            barB = 180;
+        }else{
+            barR = 255;
+            barG = 100;
+            barB = 80;
+        }
+        
+        barScale = ofRandom(1,5);
+        
     }
-    
-    for (int i = 0; i < 10; i++) {
-        ofSetColor(20, 255, 200);
-        ofRect(i*30, 0, 15, 30 + rectLength);
-    }
-    rectLength+=10;
-    
-    if(rectLength > 500){
-        rectLength = 0;
-    }
-    
 }
 
 //--------------------------------------------------------------
@@ -437,23 +547,18 @@ void ofApp::drawFboTest_07(){
     ofClear(255,255,255, 0);
     
     cam[0].begin();
-    
-    ofTranslate(ofGetWidth()/4, ofGetHeight()/4);
     ofSetColor(255);
     
     for (int i=0; i<5; i++) {
         for (int j=0; j<5; j++) {
             for (int k=0; k<10; k++) {
                 
-                arrayBox.set(arrayBoxSize+magnitude[10]*80);
+                arrayBox.set(arrayBoxSize+magnitude[20]*sensitivity);
                 arrayBox.setPosition(i*80, j*80, k*80);
                 arrayBox.draw();
             }
         }
     }
-    
-    //    ofSetColor(255, 0, 0);
-    //    testNode.draw();
     
     cam[0].end();
     
@@ -466,8 +571,6 @@ void ofApp::drawFboTest_08(){
     
     ofClear(255,255,255, 0);
     
-    
-    cam[1].lookAt(testNode[1]);
     cam[1].begin();
     
     if(yawFlag == true){
@@ -491,22 +594,25 @@ void ofApp::drawFboTest_08(){
     for (int i = 0; i < 22; i++) {
         for (int j = 0; j < 22; j++) {
             
-            ofSetColor(i*10, j*20, 255);
-            int height = magnitude[j*22+i]*500;
+            ofSetColor(255, i*10+5, j*10+5);
+            int height = magnitude[j*22+i]*sensitivity*3;
             
             transZPos[j*22+i] += 20;
-            if (boxZPos[j*22+i] > (22*50)) {
+            if (boxZPos[j*22+i] > (22*70)) {
+                boxZPos[j*22+i] = 0;
                 transZPos[j*22+i] = 0;
             }
-            boxZPos[j*22+i] = j*100 + transZPos[j*22+i];
+            boxZPos[j*22+i] = j*50 + transZPos[j*22+i];
             
             waveBox.set(20, 20+height, 20);
-            waveBox.setPosition(i*50, 10, boxZPos[j*22+1]);
+            waveBox.setPosition(i*50, 200, boxZPos[j*22+i]);
             waveBox.draw();
             
         }
     }
-    
+//        ofSetColor(255, 0, 0);
+//        testNode[1].setScale(5);
+//        testNode[1].draw();
     cam[1].end();
     
 }
@@ -525,7 +631,7 @@ void ofApp::drawFboTest_09(){
         for (int j = 0; j < 22; j++) {
             
             ofSetColor(i*10, j*20, 255);
-            sphereSize = 300 + 100 * magnitude[20];
+            sphereSize = 500 + sensitivity * magnitude[20];
             
             ofQuaternion latRot, longRot, spinQuat;
             latRot.makeRotate(i*1000/60., 1, 0, 0);
@@ -538,8 +644,8 @@ void ofApp::drawFboTest_09(){
             sphereBox.setPosition(worldPoint);
             sphereBox.draw();
             
-            ofSetColor(255, 0, 0);
-            testNode[2].draw();
+//            ofSetColor(255, 0, 0);
+//            testNode[2].draw();
         }
     }
     cam[2].end();
@@ -570,7 +676,9 @@ void ofApp::drawFbo_GUI(){
     
     ofSetColor(255);
     // check the final output on the GUI screen
-    fbo[numFbos-2].draw(500,500,612,384);
+    fbo[numFbos-2].draw((1440-1024), (900-768), 1024, 768);
+    
+    ofDrawBitmapString("duration: " + ofToString(vid.getPosition()*vid.getDuration(),2) + "/"+ofToString(vid.getDuration(),2),20,400);
     
     
     gui.draw();
@@ -672,6 +780,87 @@ void ofApp::keyPressed(int key){
         guiGlitch.setFx(OFXPOSTGLITCH_CR_GREENINVERT, true);
     }
     
+    if (key == 'a') {
+        if(setFboActive[0] == true){
+            setFboActive[0] = false;
+        }else{
+            setFboActive[0] = true;
+        }
+    }
+    if (key == 's') {
+        if(setFboActive[1] == true){
+            setFboActive[1] = false;
+        }else{
+            setFboActive[1] = true;
+        }
+    }
+    if (key == 'd') {
+        if(setFboActive[2] == true){
+            setFboActive[2] = false;
+        }else{
+            setFboActive[2] = true;
+        }
+    }
+    if (key == 'f') {
+        if(setFboActive[3] == true){
+            setFboActive[3] = false;
+        }else{
+            setFboActive[3] = true;
+        }
+    }
+    if (key == 'g') {
+        if(setFboActive[4] == true){
+            setFboActive[4] = false;
+        }else{
+            setFboActive[4] = true;
+        }
+    }
+    if (key == 'h') {
+        if(setFboActive[5] == true){
+            setFboActive[5] = false;
+        }else{
+            setFboActive[5] = true;
+        }
+    }
+    if (key == 'j') {
+        if(setFboActive[6] == true){
+            setFboActive[6] = false;
+        }else{
+            setFboActive[6] = true;
+        }
+    }
+    if (key == 'k') {
+        if(setFboActive[7] == true){
+            setFboActive[7] = false;
+        }else{
+            setFboActive[7] = true;
+        }
+        
+    }
+    if (key == 'l') {
+        if(setFboActive[8] == true){
+            setFboActive[8] = false;
+        }else{
+            setFboActive[8] = true;
+        }
+        
+    }
+    if (key == 'z') {
+        if(setFboActive[9] == true){
+            setFboActive[9] = false;
+        }else{
+            setFboActive[9] = true;
+        }
+        
+    }
+    
+    // reset
+    if (key == '/') {
+        setFboActive[0] = true;
+        for (int i=1; i<numFbos-2; i++) {
+            setFboActive[i] = false;
+        }
+    }
 }
 
 //--------------------------------------------------------------
