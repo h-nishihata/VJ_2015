@@ -35,6 +35,31 @@ void ofApp::setup(){
     camPosZ = -200;
     
     
+    
+    img.loadImage("hello.png");
+    pixels = img.getPixels();
+//    ofRotateX(30);
+    for (int i=0; i<imgWidth; i+=4) {
+        for (int j=0; j<imgHeight; j+=4) {
+            ofColor cur = img.getColor(i, j);
+            if(cur.a > 0){
+            
+                // memorize positions in the image
+                _initPos[j*imgWidth+i] = ofVec3f(i-200, j-200, 300);
+                pct[j*imgWidth+i] = 0;
+                
+
+                // deploy particles randomly
+                _pos[j*imgWidth+i] = ofVec3f(ofRandom(-100,100),
+                                  ofRandom(100),
+                                  ofRandom(100));
+                points[j*imgWidth+i].set(_initPos[j*imgWidth+i]);
+            }
+            
+        }
+    }
+
+    
     //  3D boxes
     testNode[0].setPosition(200, 200, 400);
     testController[0].setPosition(0, 0, 0);
@@ -53,7 +78,8 @@ void ofApp::setup(){
     cam[2].setPosition(camPosX, camPosY, camPosZ);
     cam[2].setParent(testController[2]);
     
-    
+    testNode[3].setPosition(0, 0, 300);
+    cam[3].setPosition(0, 0, 0);
     
     arrayBoxSize = ofRandom(20)+1;
     
@@ -78,38 +104,7 @@ void ofApp::setup(){
     barG = 255;
     barB = 180;
     
-    cam[2].setPosition(current.x, current.y+50, current.z-80);
-    cam[2].lookAt(current);
-    previous = current;
     
-    float t = (2 + ofGetElapsedTimef()) * .2;
-    current.x = ofSignedNoise(t, 0, 0);
-    current.y = ofSignedNoise(0, t, 0);
-    current.z = ofSignedNoise(0, 0, t);
-    current *= 800;
-    
-    pathVertices.push_back(current);
-    while(pathVertices.size() > 200) {
-        pathVertices.pop_front();
-    }
-    
-    pathLines.clear();
-    for(unsigned int i = 0; i < pathVertices.size(); i++) {
-        ofVec3f thisPoint = pathVertices[i];
-        ofVec3f nextPoint = pathVertices[i+1];
-        ofVec3f direction = (nextPoint - thisPoint);
-        float distance = direction.length();
-        ofVec3f unitDirection = direction.normalized();
-        
-        ofVec3f toTheLeft = unitDirection.getRotated(90, ofVec3f(0, 1, 1));
-        ofVec3f toTheRight = unitDirection.getRotated(-90, ofVec3f(0, 1, 1));
-        
-        ofVec3f leftPoint = thisPoint+toTheLeft * thickness;
-        ofVec3f rightPoint = thisPoint+toTheRight * thickness;
-        pathLines.addVertex(ofVec3f(leftPoint.x, leftPoint.y, leftPoint.z));
-        pathLines.addVertex(ofVec3f(rightPoint.x, rightPoint.y, rightPoint.z));
-        int n = pathLines.getNumColors();
-    }
 
     
     
@@ -135,7 +130,7 @@ void ofApp::setup(){
     // GUI
     gui.setup();
     gui.add(vidState.setup("video state : ", 0, 0, 3));
-    gui.add(vidSpeed.setup("video speed : ", 1.0, 0.1, 5.0));
+    gui.add(vidSpeed.setup("video speed : ", 2.0, 0.1, 5.0));
     gui.add(sensitivity.setup("sensitivity : ", 10, 0, 100));
     
 }
@@ -183,12 +178,14 @@ void ofApp::update(){
     for (int i=0; i<numFbos; i++) {
         if (setFboActive[i] == true) {
             
-            if(i == 7 || i == 9){
+            if(i == 7 || i == 9 || i == 1){
                 int t;
                 if (i == 7) {
                     t = 0;
                 }else if(i == 9){
                     t = 2;
+                }else if(i == 1){
+                    t = 3;
                 }
                 cam[t].lookAt(testNode[t]);
                 testController[t].setPosition(ofVec3f(
@@ -262,11 +259,56 @@ void ofApp::update(){
         }
     }
     
+    
+    if(ofGetKeyPressed(' ')){
+        for (int i=0; i<imgWidth; i++) {
+            for (int j=0; j<imgHeight; j++) {
+                _startPos[j*imgWidth+i] = _pos[j*imgWidth+i];
+            }
+        }
+        emergeMode = true;
+    }
+    
+    if(emergeMode){
+        
+        for (int i=0; i<imgWidth; i++) {
+            for (int j=0; j<imgHeight; j++) {
+                ofColor cur = img.getColor(i, j);
+                if(cur.a > 0){
+                    pct[j*imgWidth+i] += 0.01;
+                    
+                    _currentPos[j*imgWidth+i] = interpolateByPct(pct[j*imgWidth+i], j*imgWidth+i);
+                    if(pct[j*imgWidth+i] < 1.0){
+                        points[j*imgWidth+i].set(_currentPos[j*imgWidth+i]);
+                    }else{
+                        emergeMode = false;
+                        pct[j*imgWidth+i] = 0;
+                    }
+                    
+                }
+            
+            }
+        }
+        
+    }
+    
     //    watchDog = 0;
     
     // sounds
     avg_power = 0.0;
     myfft.powerSpectrum(0, fft_size, input, buffer_size, magnitude, phase, power, &avg_power);
+    
+}
+
+//--------------------------------------------------------------
+ofVec3f ofApp::interpolateByPct(float _pct, int _id){
+    
+    ofVec3f pos;
+    float shapedPct = powf(_pct, 0.5);
+    pos.x = (1.0 - shapedPct) * _startPos[_id].x + (shapedPct) * _initPos[_id].x;
+    pos.y = (1.0 - shapedPct) * _startPos[_id].y + (shapedPct) * _initPos[_id].y;
+    pos.z = (1.0 - shapedPct) * _startPos[_id].z + (shapedPct) * _initPos[_id].z;
+    return pos;
     
 }
 
@@ -284,53 +326,21 @@ void ofApp::drawFboTest_00(){
 //--------------------------------------------------------------
 void ofApp::drawFboTest_01(){
 
-    /*    trail
-    
     ofClear(255, 255, 255, 0);
-
+    cam[3].lookAt(testNode[3]);
     
     cam[3].begin();
-    
-    //  trail
-    ofSetLineWidth(2);
+    glPointSize(5.0);
     ofSetColor(255);
-    pathLines.draw();
-    
-    //  box
-    string str = ofToString(current, 2);
-    ofDrawBitmapString(str, current);
-    ofTranslate(current);
-    ofRotateX(current.x*.5);
-    ofRotateY(current.y*.5);
-    ofRotateZ(current.z*.5);
-    trailBox.set(8+magnitude[20]*10);
-    trailBox.draw();
-    
-    //  frames
-    ofNoFill();
-    ofSetLineWidth(8);
-    ofRect(-15, -15, 30, 30);
-    ofRotateZ(10);
-    ofSetLineWidth(5);
-    ofRect(-25, -25, 50, 50);
+    ofRotateZ(180);
 
-    ofFill();
+    p.setVertexData(&points[0], imgParticles, GL_DYNAMIC_DRAW);
+    p.draw(GL_POINTS, 0, imgParticles);
     ofSetColor(255, 0, 0);
     testNode[3].setScale(5);
     testNode[3].draw();
-    
     cam[3].end();
-    */
     
-    /* 2D spectrum bars
-    float w = (float)ofGetWidth()/ (float)fft_size / 2.0f;
-    for (int i = 0; i < fft_size; i++) {
-     
-        float h = magnitude[i] * ofGetHeight();
-        ofRect(400/2 - w * i, 400/2, w, h);
-        ofRect(400/2 + w * i, 400/2, w, -h);
-    }
-    */
 }
 
 //--------------------------------------------------------------
@@ -339,10 +349,10 @@ void ofApp::drawFboTest_02(){
     /*****      lottery machine     *****/
     
     ofClear(255,255,255, 0);
-    
+    ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
     float maxSize = 50;
     
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 120; i++) {
         ofPushMatrix();
         float t = (ofGetElapsedTimef() + i * 2) * .3;
         ofVec3f pos(ofSignedNoise(t, 0, 0),

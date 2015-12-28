@@ -7,7 +7,7 @@
 
 //#define numVids 11
 #define numFbos 12
-#define numCams 3
+#define numCams 4
 
 class ofApp : public ofBaseApp{
 public:
@@ -39,8 +39,12 @@ public:
     void gotMessage(ofMessage msg);
     
     void audioIn(float* input, int bufferSize, int nChannels);
+    ofVec3f interpolateByPct(float _pct, int _id);
     
-
+    static const int imgWidth = 313;
+    static const int imgHeight = 339;
+    static const int imgParticles  = imgWidth * imgHeight;
+    unsigned char * pixels;
     
     ofFbo fbo[numFbos];
     
@@ -50,12 +54,19 @@ public:
     
     ofVideoPlayer vid;
     
+    ofVbo p;
+    ofImage img;
+    ofVec3f points[imgParticles];
+    ofVec3f _initPos[imgParticles];
+    ofVec3f _pos[imgParticles];
+    ofVec3f _vel[imgParticles];
+    ofVec3f _frc[imgParticles];
+    ofVec3f _startPos[imgParticles];
+    ofVec3f _currentPos[imgParticles];
+    bool emergeMode;
+
+    float pct[imgParticles];
     
-    //  strokes
-    ofVec3f previous, current;
-    deque<ofVec3f> pathVertices;
-    ofMesh pathLines;
-    int thickness = 10;
     
     // rect
     int pos[10], posHeight[10], width[10], width_[10], vel[10];
@@ -75,8 +86,6 @@ public:
     int camPosX, camPosY, camPosZ;
     int yawDegree, totalYaw;
     bool yawFlag;
-    
-    ofBoxPrimitive trailBox;
     
     ofBoxPrimitive arrayBox;
     int arrayBoxSize;
@@ -114,8 +123,8 @@ public:
     // GUI
     ofxPanel gui;
     ofxIntSlider vidState;
-    ofxIntSlider sensitivity;
     ofxFloatSlider vidSpeed;
+    ofxIntSlider sensitivity;
     bool setFboActive[numFbos];
     
 };
