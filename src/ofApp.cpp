@@ -9,7 +9,7 @@ void ofApp::setup(){
     
     
     // videos
-    vid.loadMovie("merged.mov");
+    vid.loadMovie("Nami_lines 2.mov");
     vid.play();
     
     
@@ -34,31 +34,7 @@ void ofApp::setup(){
     camPosX = camPosY = 300;
     camPosZ = -200;
     
-    
-    
-    img.loadImage("hello.png");
-    pixels = img.getPixels();
-//    ofRotateX(30);
-    for (int i=0; i<imgWidth; i+=4) {
-        for (int j=0; j<imgHeight; j+=4) {
-            ofColor cur = img.getColor(i, j);
-            if(cur.a > 0){
-            
-                // memorize positions in the image
-                _initPos[j*imgWidth+i] = ofVec3f(i-200, j-200, 300);
-                pct[j*imgWidth+i] = 0;
-                
-
-                // deploy particles randomly
-                _pos[j*imgWidth+i] = ofVec3f(ofRandom(-100,100),
-                                  ofRandom(100),
-                                  ofRandom(100));
-                points[j*imgWidth+i].set(_initPos[j*imgWidth+i]);
-            }
-            
-        }
-    }
-
+    resetImg(0);
     
     //  3D boxes
     testNode[0].setPosition(200, 200, 400);
@@ -103,8 +79,7 @@ void ofApp::setup(){
     barR = 50;
     barG = 255;
     barB = 180;
-    
-    
+
 
     
     
@@ -260,43 +235,47 @@ void ofApp::update(){
     }
     
     
-    if(ofGetKeyPressed(' ')){
-        for (int i=0; i<imgWidth; i++) {
-            for (int j=0; j<imgHeight; j++) {
-                _startPos[j*imgWidth+i] = _pos[j*imgWidth+i];
-            }
-        }
-        emergeMode = true;
-    }
     
-    if(emergeMode){
-        
-        for (int i=0; i<imgWidth; i++) {
-            for (int j=0; j<imgHeight; j++) {
-                ofColor cur = img.getColor(i, j);
-                if(cur.a > 0){
-                    pct[j*imgWidth+i] += 0.01;
-                    
-                    _currentPos[j*imgWidth+i] = interpolateByPct(pct[j*imgWidth+i], j*imgWidth+i);
-                    if(pct[j*imgWidth+i] < 1.0){
-                        points[j*imgWidth+i].set(_currentPos[j*imgWidth+i]);
-                    }else{
-                        emergeMode = false;
-                        pct[j*imgWidth+i] = 0;
-                    }
-                    
-                }
-            
-            }
-        }
-        
-    }
-    
-    //    watchDog = 0;
+   //    watchDog = 0;
     
     // sounds
     avg_power = 0.0;
     myfft.powerSpectrum(0, fft_size, input, buffer_size, magnitude, phase, power, &avg_power);
+    
+}
+
+//--------------------------------------------------------------
+void ofApp::resetImg(int imgID){
+    
+    char str[5];
+    sprintf(str, "%1d.png", imgID);
+    img.loadImage(str);
+
+    
+    pixels = img.getPixels();
+    //    ofRotateX(30);
+    for (int i=0; i<imgWidth; i+=4) {
+        for (int j=0; j<imgHeight; j+=4) {
+            
+            ofColor cur = img.getColor(i, j);
+            if(cur.a > 0){
+                
+                // memorize positions in the image
+                _initPos[j*imgWidth+i] = ofVec3f(i-200, j-200, 300);
+
+                
+            }
+                // deploy all particles randomly
+                _pos[j*imgWidth+i] = ofVec3f(ofRandom(-500,500),
+                                             ofRandom(500),
+                                             ofRandom(-500,500));
+                points[j*imgWidth+i].set(_pos[j*imgWidth+i]);
+                pct[j*imgWidth+i] = 0;
+            
+            _vel[j*imgWidth+i] = ofVec3f(ofRandom(20)-10, ofRandom(20)-10, ofRandom(20)-10);
+            
+        }
+    }
     
 }
 
@@ -326,8 +305,72 @@ void ofApp::drawFboTest_00(){
 //--------------------------------------------------------------
 void ofApp::drawFboTest_01(){
 
+    time_letters++;
+    
     ofClear(255, 255, 255, 0);
     cam[3].lookAt(testNode[3]);
+    for (int i=0; i<imgParticles; i+=4) {
+        
+        if(_pos[i].x > abs(00)){_vel[i].x*-1;}
+        if(_pos[i].y > abs(200)){_vel[i].y*-1;}
+        if(_pos[i].z > abs(200)){_vel[i].z*-1;}
+        _frc[i].set(ofVec3f(0,0,0));
+        //            _frc[i] += ofVec3f(0.1, 0.1, 0.1);
+        _pos[i] -= _vel[i]*0.9;
+        //            _vel[i] += _frc[i];
+        _pos[i] += _vel[i];
+        
+        points[i].set(_pos[i]);
+    }
+    
+    
+    if(time_letters == 100){
+        for (int i=0; i<imgWidth; i++) {
+            for (int j=0; j<imgHeight; j++) {
+                _startPos[j*imgWidth+i] = _pos[j*imgWidth+i];
+            }
+        }
+        emergeMode = true;
+    }
+    
+    
+    if(emergeMode){
+        
+        for (int i=0; i<imgWidth; i++) {
+            for (int j=0; j<imgHeight; j++) {
+                
+                ofColor cur = img.getColor(i, j);
+                if(cur.a > 0){
+                    pct[j*imgWidth+i] += 0.01;
+                    
+                    _currentPos[j*imgWidth+i] = interpolateByPct(pct[j*imgWidth+i], j*imgWidth+i);
+                    if(pct[j*imgWidth+i] < 1.0){
+                        points[j*imgWidth+i].set(_currentPos[j*imgWidth+i]);
+                    }else{
+                        points[j*imgWidth+i].set(_initPos[j*imgWidth+i]);
+                    }
+                    
+                }
+                if(time_letters == 800){
+                    emergeMode = false;
+                    pct[j*imgWidth+i] = 0;
+                }
+            }
+        }
+        
+    }
+   
+    
+    if(time_letters == 1000){
+        if(_imgID < numImgs){
+            _imgID ++;
+        }else{
+            _imgID = 0;
+        }
+        resetImg(_imgID);
+        time_letters = 0;
+    }
+
     
     cam[3].begin();
     glPointSize(5.0);
@@ -336,9 +379,9 @@ void ofApp::drawFboTest_01(){
 
     p.setVertexData(&points[0], imgParticles, GL_DYNAMIC_DRAW);
     p.draw(GL_POINTS, 0, imgParticles);
-    ofSetColor(255, 0, 0);
-    testNode[3].setScale(5);
-    testNode[3].draw();
+//    ofSetColor(255, 0, 0);
+//    testNode[3].setScale(5);
+//    testNode[3].draw();
     cam[3].end();
     
 }

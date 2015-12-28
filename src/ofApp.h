@@ -8,6 +8,7 @@
 //#define numVids 11
 #define numFbos 12
 #define numCams 4
+#define numImgs 2
 
 class ofApp : public ofBaseApp{
 public:
@@ -39,8 +40,10 @@ public:
     void gotMessage(ofMessage msg);
     
     void audioIn(float* input, int bufferSize, int nChannels);
+    void resetImg(int imgID);
     ofVec3f interpolateByPct(float _pct, int _id);
     
+    int _imgID;
     static const int imgWidth = 313;
     static const int imgHeight = 339;
     static const int imgParticles  = imgWidth * imgHeight;
@@ -66,7 +69,7 @@ public:
     bool emergeMode;
 
     float pct[imgParticles];
-    
+    int time_letters;
     
     // rect
     int pos[10], posHeight[10], width[10], width_[10], vel[10];
