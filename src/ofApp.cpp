@@ -8,18 +8,18 @@ void ofApp::setup(){
     ofSetVerticalSync(true);
     
     
-    // videos
-    vid.loadMovie("Nami_lines 2.mov");
+    //  videos
+    vid.loadMovie("merged.mov");
     vid.play();
     
     
-    // GUI buffer
+    //  GUI buffer
     fbo[numFbos-1].allocate(1440, 900, GL_RGBA);
     fbo[numFbos-1].begin();
     ofClear(255,255,255, 0);
     fbo[numFbos-1].end();
     
-    // buffers
+    //  buffers
     for (int i=0; i<numFbos-1; i++) {
         
         fbo[i].allocate(1024, 768, GL_RGBA);
@@ -30,48 +30,50 @@ void ofApp::setup(){
     }
     
     
-    // cameras & nodes
+    //  cameras & nodes
     camPosX = camPosY = 300;
     camPosZ = -200;
     
+    
+    //  01 _ particle letters
     resetImg(0);
+    testNode[3].setPosition(0, -500, 0);
+    testController[3].setPosition(0, 0, 0);
+    cam[3].setPosition(camPosX, camPosY, camPosZ);
     
-    //  3D boxes
-    testNode[0].setPosition(200, 200, 400);
-    testController[0].setPosition(0, 0, 0);
-    cam[0].setPosition(camPosX, camPosY, camPosZ);
-    cam[0].setParent(testController[0]);
-    
-    
-    //  spectrum boxes
-    testNode[1].setPosition(700, 0, 1000);
-    cam[1].setPosition(700, 500, 2000);
-    
-    
-    //  sphere boxes
-    testNode[2].setPosition(500, 500, 100);
-    testController[2].setPosition(0, 0, 0);
-    cam[2].setPosition(camPosX, camPosY, camPosZ);
-    cam[2].setParent(testController[2]);
-    
-    testNode[3].setPosition(0, 0, 300);
-    cam[3].setPosition(0, 0, 0);
-    
-    arrayBoxSize = ofRandom(20)+1;
     
     for (int i=0; i<10; i++) {
         r[i] = ofRandom(255);
         g[i] = ofRandom(255);
         b[i] = ofRandom(255);
         
-        pos [i] = ofRandom(ofGetWidth());
-        posHeight [i] = ofRandom(ofGetHeight())-200;
-        width[i] = ofRandom(300)+10;
-        width_[i] = ofRandom(400)+50;
-        vel[i] = ofRandom(100)-50;
         lastingTime[i] = ofRandom(50);
     }
     
+    
+    //  03 _ parallelograms
+    for (int i=0; i<10; i++) {
+        
+        xPos_03[i] = ofRandom(ofGetWidth());
+        yPos_03[i] = ofRandom(ofGetHeight())-200;
+        vel_03[i] = ofRandom(100)-50;
+        
+    }
+    
+    
+    //  04 _ simple rectangles
+    for (int i=0; i<10; i++) {
+        
+        xPos_04[i] = ofRandom(ofGetWidth());
+        yPos_04[i] = ofRandom(ofGetHeight())-200;
+        width_04[i] = ofRandom(300)+10;
+        height_04[i] = ofRandom(400)+50;
+        vel_04[i] = ofRandom(100)-50;
+        
+    }
+    
+    
+    //  05 _ growing stripes
     translateX = 0;
     translateY = 200;
     rotAng = -45;
@@ -79,8 +81,41 @@ void ofApp::setup(){
     barR = 50;
     barG = 255;
     barB = 180;
-
-
+    
+    
+    //  06 _ rect bars
+    for (int i=0; i<10; i++) {
+        
+        xPos_06[i] = ofRandom(ofGetWidth());
+        width_06[i] = ofRandom(300)+10;
+        vel_06[i] = ofRandom(100)-100;
+        
+    }
+    elapsedTime_06 = 70;
+    
+    
+    //  07 _ 3D boxes
+    testNode[0].setPosition(200, 200, 400);
+    testController[0].setPosition(0, 0, 0);
+    cam[0].setPosition(camPosX, camPosY, camPosZ);
+    cam[0].setParent(testController[0]);
+    
+    arrayBoxSize = ofRandom(20)+1;
+    
+    
+    //  08 _ spectrum boxes
+    testNode[1].setPosition(700, 0, 1000);
+    cam[1].setPosition(700, 350, 2000);
+    
+    
+    //  09 _ sphere boxes
+    testNode[2].setPosition(500, 500, 100);
+    testController[2].setPosition(0, 0, 0);
+    cam[2].setPosition(camPosX, camPosY, camPosZ);
+    cam[2].setParent(testController[2]);
+    
+    
+    
     
     
     // glitchs
@@ -236,7 +271,7 @@ void ofApp::update(){
     
     
     
-   //    watchDog = 0;
+    //    watchDog = 0;
     
     // sounds
     avg_power = 0.0;
@@ -250,10 +285,9 @@ void ofApp::resetImg(int imgID){
     char str[5];
     sprintf(str, "%1d.png", imgID);
     img.loadImage(str);
-
     
     pixels = img.getPixels();
-    //    ofRotateX(30);
+    
     for (int i=0; i<imgWidth; i+=4) {
         for (int j=0; j<imgHeight; j+=4) {
             
@@ -261,16 +295,16 @@ void ofApp::resetImg(int imgID){
             if(cur.a > 0){
                 
                 // memorize positions in the image
-                _initPos[j*imgWidth+i] = ofVec3f(i-200, j-200, 300);
-
+                _initPos[j*imgWidth+i] = ofVec3f(i-300, j, 0);
+                
                 
             }
-                // deploy all particles randomly
-                _pos[j*imgWidth+i] = ofVec3f(ofRandom(-500,500),
-                                             ofRandom(500),
-                                             ofRandom(-500,500));
-                points[j*imgWidth+i].set(_pos[j*imgWidth+i]);
-                pct[j*imgWidth+i] = 0;
+            // deploy all particles randomly
+            _pos[j*imgWidth+i] = ofVec3f(ofRandom(-500,500),
+                                         ofRandom(500),
+                                         ofRandom(-500,500));
+            points[j*imgWidth+i].set(_pos[j*imgWidth+i]);
+            pct[j*imgWidth+i] = 0;
             
             _vel[j*imgWidth+i] = ofVec3f(ofRandom(20)-10, ofRandom(20)-10, ofRandom(20)-10);
             
@@ -299,32 +333,33 @@ void ofApp::drawFboTest_00(){
     ofClear(255,255,255, 0);
     vid.draw(0, 0, 1024, 768);
     
-    
 }
 
 //--------------------------------------------------------------
 void ofApp::drawFboTest_01(){
-
+    
+    /*****      particle letters     *****/
+    
     time_letters++;
     
     ofClear(255, 255, 255, 0);
     cam[3].lookAt(testNode[3]);
+    
     for (int i=0; i<imgParticles; i+=4) {
         
-        if(_pos[i].x > abs(00)){_vel[i].x*-1;}
-        if(_pos[i].y > abs(200)){_vel[i].y*-1;}
-        if(_pos[i].z > abs(200)){_vel[i].z*-1;}
-        _frc[i].set(ofVec3f(0,0,0));
-        //            _frc[i] += ofVec3f(0.1, 0.1, 0.1);
-        _pos[i] -= _vel[i]*0.9;
-        //            _vel[i] += _frc[i];
-        _pos[i] += _vel[i];
+        if(_pos[i].x > abs(500)){_vel[i].x*-1;}
+        if(_pos[i].y > abs(500)){_vel[i].y*-1;}
+        if(_pos[i].z > abs(500)){_vel[i].z*-1;}
         
+        _frc[i].set(ofVec3f(0,0,0));
+        _pos[i] -= _vel[i]*0.9;
+        _pos[i] += _vel[i];
         points[i].set(_pos[i]);
+        
     }
     
     
-    if(time_letters == 100){
+    if(time_letters == 50){
         for (int i=0; i<imgWidth; i++) {
             for (int j=0; j<imgHeight; j++) {
                 _startPos[j*imgWidth+i] = _pos[j*imgWidth+i];
@@ -351,7 +386,7 @@ void ofApp::drawFboTest_01(){
                     }
                     
                 }
-                if(time_letters == 800){
+                if(time_letters == 600){
                     emergeMode = false;
                     pct[j*imgWidth+i] = 0;
                 }
@@ -359,9 +394,9 @@ void ofApp::drawFboTest_01(){
         }
         
     }
-   
     
-    if(time_letters == 1000){
+    
+    if(time_letters == 650){
         if(_imgID < numImgs){
             _imgID ++;
         }else{
@@ -370,18 +405,15 @@ void ofApp::drawFboTest_01(){
         resetImg(_imgID);
         time_letters = 0;
     }
-
+    
     
     cam[3].begin();
     glPointSize(5.0);
-    ofSetColor(255);
+    ofSetColor(255,255,0);
     ofRotateZ(180);
-
+    
     p.setVertexData(&points[0], imgParticles, GL_DYNAMIC_DRAW);
     p.draw(GL_POINTS, 0, imgParticles);
-//    ofSetColor(255, 0, 0);
-//    testNode[3].setScale(5);
-//    testNode[3].draw();
     cam[3].end();
     
 }
@@ -392,8 +424,8 @@ void ofApp::drawFboTest_02(){
     /*****      lottery machine     *****/
     
     ofClear(255,255,255, 0);
-    ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
-    float maxSize = 50;
+    ofTranslate(0, ofGetHeight()/2);
+    float maxSize = 200;
     
     for(int i = 0; i < 120; i++) {
         ofPushMatrix();
@@ -432,24 +464,24 @@ void ofApp::drawFboTest_03(){
         
         for(int j = 0; j < 10; j++) {
             ofBeginShape();
-            ofVertex(pos[i]-500 + j*40*i, posHeight[i] + 0);
-            ofVertex(pos[i]-500 + j*40*i+20*i, posHeight[i] + 0);
-            ofVertex(pos[i]-500 + j*40*i+40*i, posHeight[i] + 50*i);
-            ofVertex(pos[i]-500 + j*40*i+20*i, posHeight[i] + 50*i);
-            ofVertex(pos[i]-500 + j*40*i, posHeight[i] + 0*i);
+            ofVertex(xPos_03[i]-500 + j*40*i, yPos_03[i] + 0);
+            ofVertex(xPos_03[i]-500 + j*40*i+20*i, yPos_03[i] + 0);
+            ofVertex(xPos_03[i]-500 + j*40*i+40*i, yPos_03[i] + 50*i);
+            ofVertex(xPos_03[i]-500 + j*40*i+20*i, yPos_03[i] + 50*i);
+            ofVertex(xPos_03[i]-500 + j*40*i, yPos_03[i] + 0*i);
             ofEndShape();
         }
         
         if(i == 1){
-            pos[i] += vel[i]/5;
+            xPos_03[i] += vel_03[i]/2;
         }else if(i == 2){
-            pos[i] -= vel[i]/5;
+            xPos_03[i] -= vel_03[i]/2;
         }
         
         if(elapsedTime[i] > lastingTime[i]){
             elapsedTime[i] = 0;
-            pos[i]  = ofRandom(ofGetWidth());
-            posHeight[i]  = ofRandom(ofGetHeight());
+            xPos_03[i]  = ofRandom(ofGetWidth());
+            yPos_03[i]  = ofRandom(ofGetHeight());
             r[i] = ofRandom(255);
             g[i] = ofRandom(255);
             b[i] = ofRandom(255);
@@ -475,30 +507,30 @@ void ofApp::drawFboTest_04(){
         ofSetColor(r[i], g[i], b[i]);
         ofFill();
         
-        ofRect(pos[i], posHeight[i], width_[i], width[i]);
+        ofRect(xPos_04[i], yPos_04[i], width_04[i], height_04[i]);
         
         if(i<=2){
-            pos[i] += vel[i]/5;
+            xPos_04[i] += vel_04[i]/5;
         }else if(i>2 && i <= 4){
-            posHeight[i] += vel[i]/5;
+            yPos_04[i] += vel_04[i]/5;
         }else if(i>4 && i <= 6){
-            width_[i]++;
+            width_04[i]++;
         }else if(i>6 && i <= 8){
-            width[i]++;
+            width_04[i]++;
         }else if(i>8 && i <= 10){
             if(ofRandom(10)>5){
-                pos[i]--;
-                width_[i]++;
+                xPos_04[i]--;
+                height_04[i]++;
             }else{
-                posHeight[i]--;
-                width[i]++;
+                yPos_04[i]--;
+                width_04[i]++;
             }
         }
         
         if(elapsedTime[i] > lastingTime[i]){
             elapsedTime[i] = 0;
-            pos[i]  = ofRandom(ofGetWidth());
-            posHeight[i]  = ofRandom(ofGetHeight());
+            xPos_04[i]  = ofRandom(ofGetWidth());
+            yPos_04[i]  = ofRandom(ofGetHeight());
             r[i] = ofRandom(255);
             g[i] = ofRandom(255);
             b[i] = ofRandom(255);
@@ -516,13 +548,13 @@ void ofApp::drawFboTest_05(){
     
     ofClear(255,255,255, 0);
     
-    elapsedTime[0]++;
+    elapsedTime_06++;
     ofTranslate(translateX, translateY);
     ofRotate(rotAng);
     ofScale(barScale, barScale);
     ofSetColor(barR, barG, barB);
     
-    if(elapsedTime[0] < lastingTime[0]){
+    if(elapsedTime_06 < lastingTime[0]){
         
         for (int i = 0; i < 10; i++) {
             ofRect(i*30, 0, 15, 30 + rectLength);
@@ -535,7 +567,7 @@ void ofApp::drawFboTest_05(){
         
     }else{
         
-        elapsedTime[0] = 0;
+        elapsedTime_06 = 0;
         translateX = ofRandom(-200);
         translateY = ofRandom(-200);
         
@@ -568,19 +600,19 @@ void ofApp::drawFboTest_06(){
         ofSetColor(r[i], g[i], b[i]);
         ofFill();
         
-        ofRect(pos[i], 0, width[i], ofGetHeight());
-        pos[i] += vel[i];
-        if(pos[i] > ofGetWidth() || pos[i] < 0){
-            pos[i]  = ofRandom(ofGetWidth());
+        ofRect(xPos_06[i], 0, width_06[i], ofGetHeight());
+        xPos_06[i] += vel_06[i];
+        if(xPos_06[i] > ofGetWidth() || xPos_06[i] < 0){
+            xPos_06[i]  = ofRandom(ofGetWidth());
             r[i] = ofRandom(255);
             g[i] = ofRandom(255);
             b[i] = ofRandom(255);
             
         }
         
-        if(width[i] > 50){
+        if(width_06[i] > 50){
             for (int k = 0; k < ofGetHeight(); k++) {
-                for (int j = pos[i]; j<width[i]/20; j++) {
+                for (int j = xPos_06[i]; j<width_06[i]/20; j++) {
                     ofSetColor(255);
                     ofRect(j*20, k*20, 10, 10);
                 }
@@ -651,21 +683,18 @@ void ofApp::drawFboTest_08(){
             int height = magnitude[j*22+i]*sensitivity*3;
             
             transZPos[j*22+i] += 20;
-            if (boxZPos[j*22+i] > (22*70)) {
+            if (boxZPos[j*22+i] > (22*(30+80))) {
                 boxZPos[j*22+i] = 0;
                 transZPos[j*22+i] = 0;
             }
-            boxZPos[j*22+i] = j*50 + transZPos[j*22+i];
+            boxZPos[j*22+i] = j*80 + transZPos[j*22+i];
             
-            waveBox.set(20, 20+height, 20);
-            waveBox.setPosition(i*50, 200, boxZPos[j*22+i]);
+            waveBox.set(30, 20+height, 30);
+            waveBox.setPosition(i*80, 200, boxZPos[j*22+i]);
             waveBox.draw();
             
         }
     }
-//        ofSetColor(255, 0, 0);
-//        testNode[1].setScale(5);
-//        testNode[1].draw();
     cam[1].end();
     
 }
@@ -696,11 +725,9 @@ void ofApp::drawFboTest_09(){
             sphereBox.set(10, 10, 10);
             sphereBox.setPosition(worldPoint);
             sphereBox.draw();
-            
-//            ofSetColor(255, 0, 0);
-//            testNode[2].draw();
         }
     }
+    
     cam[2].end();
     
 }
@@ -768,121 +795,101 @@ void ofApp::audioIn(float* _input, int bufferSize, int nChannels) {
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
     
-    if (key == '1'){
+    if (key == 'q'){
         myGlitch.setFx(OFXPOSTGLITCH_CONVERGENCE, true);
         guiGlitch.setFx(OFXPOSTGLITCH_CONVERGENCE, true);
     }
-    if (key == '2'){
-        myGlitch.setFx(OFXPOSTGLITCH_GLOW, true);
-        guiGlitch.setFx(OFXPOSTGLITCH_GLOW, true);
-    }
-    if (key == '3'){
+    if (key == 'w'){
         myGlitch.setFx(OFXPOSTGLITCH_SHAKER, true);
         guiGlitch.setFx(OFXPOSTGLITCH_SHAKER, true);
     }
-    if (key == '4'){
+    if (key == 'e'){
         myGlitch.setFx(OFXPOSTGLITCH_CUTSLIDER, true);
         guiGlitch.setFx(OFXPOSTGLITCH_CUTSLIDER, true);
     }
-    if (key == '5'){
+    if (key == 'r'){
         myGlitch.setFx(OFXPOSTGLITCH_TWIST, true);
         guiGlitch.setFx(OFXPOSTGLITCH_TWIST, true);
     }
-    if (key == '6'){
-        myGlitch.setFx(OFXPOSTGLITCH_INVERT, true);
-        guiGlitch.setFx(OFXPOSTGLITCH_INVERT, true);
-    }
-    if (key == '7'){
-        myGlitch.setFx(OFXPOSTGLITCH_NOISE, true);
-        guiGlitch.setFx(OFXPOSTGLITCH_NOISE, true);
-    }
-    if (key == '8'){
+    if (key == 't'){
         myGlitch.setFx(OFXPOSTGLITCH_SLITSCAN, true);
         guiGlitch.setFx(OFXPOSTGLITCH_SLITSCAN, true);
     }
-    if (key == '9'){
+    if (key == 'y'){
         myGlitch.setFx(OFXPOSTGLITCH_SWELL, true);
         guiGlitch.setFx(OFXPOSTGLITCH_SWELL, true);
     }
-    if (key == 'q'){
-        myGlitch.setFx(OFXPOSTGLITCH_CR_HIGHCONTRAST, true);
-        guiGlitch.setFx(OFXPOSTGLITCH_CR_HIGHCONTRAST, true);
+    
+    // invert
+    if (key == 'u'){
+        myGlitch.setFx(OFXPOSTGLITCH_INVERT, true);
+        guiGlitch.setFx(OFXPOSTGLITCH_INVERT, true);
     }
-    if (key == 'w'){
-        myGlitch.setFx(OFXPOSTGLITCH_CR_BLUERAISE, true);
-        guiGlitch.setFx(OFXPOSTGLITCH_CR_BLUERAISE, true);
-    }
-    if (key == 'e'){
-        myGlitch.setFx(OFXPOSTGLITCH_CR_REDRAISE, true);
-        guiGlitch.setFx(OFXPOSTGLITCH_CR_REDRAISE, true);
-    }
-    if (key == 'r'){
-        myGlitch.setFx(OFXPOSTGLITCH_CR_GREENRAISE, true);
-        guiGlitch.setFx(OFXPOSTGLITCH_CR_GREENRAISE, true);
-    }
-    if (key == 't'){
+    if (key == 'i'){
         myGlitch.setFx(OFXPOSTGLITCH_CR_BLUEINVERT, true);
         guiGlitch.setFx(OFXPOSTGLITCH_CR_BLUEINVERT, true);
     }
-    if (key == 'y'){
+    if (key == 'o'){
         myGlitch.setFx(OFXPOSTGLITCH_CR_REDINVERT, true);
         guiGlitch.setFx(OFXPOSTGLITCH_CR_REDINVERT, true);
     }
-    if (key == 'u'){
+    if (key == 'p'){
         myGlitch.setFx(OFXPOSTGLITCH_CR_GREENINVERT, true);
         guiGlitch.setFx(OFXPOSTGLITCH_CR_GREENINVERT, true);
     }
     
-    if (key == 'a') {
+    
+    // scenes
+    if (key == 'z') {
         if(setFboActive[0] == true){
             setFboActive[0] = false;
         }else{
             setFboActive[0] = true;
         }
     }
-    if (key == 's') {
+    if (key == 'x') {
         if(setFboActive[1] == true){
             setFboActive[1] = false;
         }else{
             setFboActive[1] = true;
         }
     }
-    if (key == 'd') {
+    if (key == 'c') {
         if(setFboActive[2] == true){
             setFboActive[2] = false;
         }else{
             setFboActive[2] = true;
         }
     }
-    if (key == 'f') {
+    if (key == 'v') {
         if(setFboActive[3] == true){
             setFboActive[3] = false;
         }else{
             setFboActive[3] = true;
         }
     }
-    if (key == 'g') {
+    if (key == 'b') {
         if(setFboActive[4] == true){
             setFboActive[4] = false;
         }else{
             setFboActive[4] = true;
         }
     }
-    if (key == 'h') {
+    if (key == 'n') {
         if(setFboActive[5] == true){
             setFboActive[5] = false;
         }else{
             setFboActive[5] = true;
         }
     }
-    if (key == 'j') {
+    if (key == 'm') {
         if(setFboActive[6] == true){
             setFboActive[6] = false;
         }else{
             setFboActive[6] = true;
         }
     }
-    if (key == 'k') {
+    if (key == ',') {
         if(setFboActive[7] == true){
             setFboActive[7] = false;
         }else{
@@ -890,7 +897,7 @@ void ofApp::keyPressed(int key){
         }
         
     }
-    if (key == 'l') {
+    if (key == '.') {
         if(setFboActive[8] == true){
             setFboActive[8] = false;
         }else{
@@ -898,7 +905,7 @@ void ofApp::keyPressed(int key){
         }
         
     }
-    if (key == 'z') {
+    if (key == '/') {
         if(setFboActive[9] == true){
             setFboActive[9] = false;
         }else{
@@ -908,78 +915,57 @@ void ofApp::keyPressed(int key){
     }
     
     // reset
-    if (key == '/') {
+    if (key == ' ') {
         setFboActive[0] = true;
         for (int i=1; i<numFbos-2; i++) {
             setFboActive[i] = false;
         }
     }
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
     
-    if (key == '1'){
+    if (key == 'q'){
         myGlitch.setFx(OFXPOSTGLITCH_CONVERGENCE, false);
         guiGlitch.setFx(OFXPOSTGLITCH_CONVERGENCE, false);
     }
-    if (key == '2'){
-        myGlitch.setFx(OFXPOSTGLITCH_GLOW, false);
-        guiGlitch.setFx(OFXPOSTGLITCH_GLOW, false);
-    }
-    if (key == '3'){
+    if (key == 'w'){
         myGlitch.setFx(OFXPOSTGLITCH_SHAKER, false);
         guiGlitch.setFx(OFXPOSTGLITCH_SHAKER, false);
     }
-    if (key == '4'){
+    if (key == 'e'){
         myGlitch.setFx(OFXPOSTGLITCH_CUTSLIDER, false);
         guiGlitch.setFx(OFXPOSTGLITCH_CUTSLIDER, false);
     }
-    if (key == '5'){
+    if (key == 'r'){
         myGlitch.setFx(OFXPOSTGLITCH_TWIST, false);
         guiGlitch.setFx(OFXPOSTGLITCH_TWIST, false);
     }
-    if (key == '6'){
-        myGlitch.setFx(OFXPOSTGLITCH_INVERT, false);
-        guiGlitch.setFx(OFXPOSTGLITCH_INVERT, false);
-    }
-    if (key == '7'){
-        myGlitch.setFx(OFXPOSTGLITCH_NOISE, false);
-        guiGlitch.setFx(OFXPOSTGLITCH_NOISE, false);
-    }
-    if (key == '8'){
+    if (key == 't'){
         myGlitch.setFx(OFXPOSTGLITCH_SLITSCAN, false);
         guiGlitch.setFx(OFXPOSTGLITCH_SLITSCAN, false);
     }
-    if (key == '9'){
+    if (key == 'y'){
         myGlitch.setFx(OFXPOSTGLITCH_SWELL, false);
         guiGlitch.setFx(OFXPOSTGLITCH_SWELL, false);
     }
-    if (key == 'q'){
-        myGlitch.setFx(OFXPOSTGLITCH_CR_HIGHCONTRAST, false);
-        guiGlitch.setFx(OFXPOSTGLITCH_CR_HIGHCONTRAST, false);
+    
+    // invert
+    if (key == 'u'){
+        myGlitch.setFx(OFXPOSTGLITCH_INVERT, false);
+        guiGlitch.setFx(OFXPOSTGLITCH_INVERT, false);
     }
-    if (key == 'w'){
-        myGlitch.setFx(OFXPOSTGLITCH_CR_BLUERAISE, false);
-        guiGlitch.setFx(OFXPOSTGLITCH_CR_BLUERAISE, false);
-    }
-    if (key == 'e'){
-        myGlitch.setFx(OFXPOSTGLITCH_CR_REDRAISE, false);
-        guiGlitch.setFx(OFXPOSTGLITCH_CR_REDRAISE, false);
-    }
-    if (key == 'r'){
-        myGlitch.setFx(OFXPOSTGLITCH_CR_GREENRAISE, false);
-        guiGlitch.setFx(OFXPOSTGLITCH_CR_GREENRAISE, false);
-    }
-    if (key == 't'){
+    if (key == 'i'){
         myGlitch.setFx(OFXPOSTGLITCH_CR_BLUEINVERT, false);
         guiGlitch.setFx(OFXPOSTGLITCH_CR_BLUEINVERT, false);
     }
-    if (key == 'y'){
+    if (key == 'o'){
         myGlitch.setFx(OFXPOSTGLITCH_CR_REDINVERT, false);
         guiGlitch.setFx(OFXPOSTGLITCH_CR_REDINVERT, false);
     }
-    if (key == 'u'){
+    if (key == 'p'){
         myGlitch.setFx(OFXPOSTGLITCH_CR_GREENINVERT, false);
         guiGlitch.setFx(OFXPOSTGLITCH_CR_GREENINVERT, false);
     }

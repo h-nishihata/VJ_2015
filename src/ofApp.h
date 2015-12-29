@@ -43,11 +43,7 @@ public:
     void resetImg(int imgID);
     ofVec3f interpolateByPct(float _pct, int _id);
     
-    int _imgID;
-    static const int imgWidth = 313;
-    static const int imgHeight = 339;
-    static const int imgParticles  = imgWidth * imgHeight;
-    unsigned char * pixels;
+    
     
     ofFbo fbo[numFbos];
     
@@ -55,7 +51,17 @@ public:
     ofNode testNode[numCams];
     ofNode testController[numCams];
     
+    
+    
+    //  00 _ videos
     ofVideoPlayer vid;
+    
+    //  01 _ particle letters
+    int _imgID;
+    static const int imgWidth = 313;
+    static const int imgHeight = 339;
+    static const int imgParticles  = imgWidth * imgHeight;
+    unsigned char * pixels;
     
     ofVbo p;
     ofImage img;
@@ -71,35 +77,46 @@ public:
     float pct[imgParticles];
     int time_letters;
     
-    // rect
-    int pos[10], posHeight[10], width[10], width_[10], vel[10];
-    int rectLength;
-
+    
+    //  rects
     int r[10], g[10], b[10];
     int elapsedTime[10], lastingTime[10];
     
-    // growing stripes
+    //  03 _ parallelograms
+    int xPos_03[10], yPos_03[10], vel_03[10];
+    
+    //  04 _ simple rectangles
+    int xPos_04[10], yPos_04[10], width_04[10], height_04[10], vel_04[10];
+    
+    //  05 _ growing stripes
     int translateX, translateY;
     int rotAng;
     int barScale;
     int barR, barG, barB;
     
-    // spectrumboxes
+    //  06 _ rect bars
+    int xPos_06[10], width_06[10], vel_06[10];
+    int rectLength;
+    int elapsedTime_06;
+    
+    //  07 _ 3D boxes
+    ofBoxPrimitive arrayBox;
+    int arrayBoxSize;
+    
+    //  08 _ spectrum boxes
     bool zFlag;
     int camPosX, camPosY, camPosZ;
     int yawDegree, totalYaw;
     bool yawFlag;
-    
-    ofBoxPrimitive arrayBox;
-    int arrayBoxSize;
-    
+
     ofBoxPrimitive waveBox;
     int boxZPos[512];
     int transZPos[512];
     
+    
+    //  09  _ sphere boxes
     ofBoxPrimitive sphereBox;
     float sphereSize;
-    
     
 //    int watchDog;
     
