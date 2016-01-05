@@ -5,7 +5,6 @@
 #include "fft.h"
 #include "ofxGui.h"
 
-//#define numVids 11
 #define numFbos 12
 #define numCams 4
 #define numImgs 2
@@ -121,7 +120,6 @@ public:
 //    int watchDog;
     
     
-    
     //  glitchs
     ofxPostGlitch myGlitch;
     ofxPostGlitch guiGlitch;
@@ -142,6 +140,8 @@ public:
     
     // GUI
     ofxPanel gui;
+    ofxToggle testPattern;
+    ofxToggle readyToShow;
     ofxIntSlider vidState;
     ofxFloatSlider vidSpeed;
     ofxIntSlider sensitivity;

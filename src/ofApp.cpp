@@ -37,9 +37,10 @@ void ofApp::setup(){
     
     //  01 _ particle letters
     resetImg(0);
-    testNode[3].setPosition(0, -500, 0);
+    testNode[3].setPosition(0, -200, 0);
     testController[3].setPosition(0, 0, 0);
     cam[3].setPosition(camPosX, camPosY, camPosZ);
+    cam[3].setParent(testNode[3]);
     
     
     for (int i=0; i<10; i++) {
@@ -54,9 +55,9 @@ void ofApp::setup(){
     //  03 _ parallelograms
     for (int i=0; i<10; i++) {
         
-        xPos_03[i] = ofRandom(ofGetWidth());
-        yPos_03[i] = ofRandom(ofGetHeight())-200;
-        vel_03[i] = ofRandom(100)-50;
+        xPos_03[i] = ofRandom(fbo[3].getWidth());
+        yPos_03[i] = ofRandom(fbo[3].getHeight())-200;
+        vel_03[i] = ofRandom(100)-100;
         
     }
     
@@ -64,11 +65,11 @@ void ofApp::setup(){
     //  04 _ simple rectangles
     for (int i=0; i<10; i++) {
         
-        xPos_04[i] = ofRandom(ofGetWidth());
-        yPos_04[i] = ofRandom(ofGetHeight())-200;
+        xPos_04[i] = ofRandom(fbo[4].getWidth());
+        yPos_04[i] = ofRandom(fbo[4].getHeight())-200;
         width_04[i] = ofRandom(300)+10;
         height_04[i] = ofRandom(400)+50;
-        vel_04[i] = ofRandom(100)-50;
+        vel_04[i] = ofRandom(100)-100;
         
     }
     
@@ -86,11 +87,12 @@ void ofApp::setup(){
     //  06 _ rect bars
     for (int i=0; i<10; i++) {
         
-        xPos_06[i] = ofRandom(ofGetWidth());
+        xPos_06[i] = ofRandom(fbo[6].getWidth());
         width_06[i] = ofRandom(300)+10;
-        vel_06[i] = ofRandom(100)-100;
+        vel_06[i] = ofRandom(80)-50;
         
     }
+    
     elapsedTime_06 = 70;
     
     
@@ -139,6 +141,8 @@ void ofApp::setup(){
     
     // GUI
     gui.setup();
+    gui.add(testPattern.setup("test pattern : ", true));
+    gui.add(readyToShow.setup("ready to show : ", false));
     gui.add(vidState.setup("video state : ", 0, 0, 3));
     gui.add(vidSpeed.setup("video speed : ", 2.0, 0.1, 5.0));
     gui.add(sensitivity.setup("sensitivity : ", 10, 0, 100));
@@ -173,10 +177,11 @@ void ofApp::update(){
         }
     }else if (vidState == 3) {
         // main 2
-        if (vid.getPosition()*vid.getDuration() >= 202.0) {
+        if (vid.getPosition()*vid.getDuration() >= 201.0) {
             vid.setPosition((int)121.0/202.2);
         }
     }
+    
     
     // final output
     setFboActive[numFbos-2] = true;
@@ -424,8 +429,8 @@ void ofApp::drawFboTest_02(){
     /*****      lottery machine     *****/
     
     ofClear(255,255,255, 0);
-    ofTranslate(0, ofGetHeight()/2);
-    float maxSize = 200;
+    ofTranslate(fbo[2].getWidth()/2, fbo[2].getHeight()/2);
+    float maxSize = 80;
     
     for(int i = 0; i < 120; i++) {
         ofPushMatrix();
@@ -435,7 +440,7 @@ void ofApp::drawFboTest_02(){
                     ofSignedNoise(0, 0, t));
         
         float size = maxSize * ofNoise(pos.x, pos.y, pos.z);
-        pos *= ofGetWidth()/2;
+        pos *= fbo[2].getWidth()/2;
         ofTranslate(pos);
         ofRotateX(pos.x*.8);
         ofRotateY(pos.y*.8);
@@ -480,8 +485,8 @@ void ofApp::drawFboTest_03(){
         
         if(elapsedTime[i] > lastingTime[i]){
             elapsedTime[i] = 0;
-            xPos_03[i]  = ofRandom(ofGetWidth());
-            yPos_03[i]  = ofRandom(ofGetHeight());
+            xPos_03[i]  = ofRandom(fbo[3].getWidth());
+            yPos_03[i]  = ofRandom(fbo[3].getHeight());
             r[i] = ofRandom(255);
             g[i] = ofRandom(255);
             b[i] = ofRandom(255);
@@ -529,8 +534,8 @@ void ofApp::drawFboTest_04(){
         
         if(elapsedTime[i] > lastingTime[i]){
             elapsedTime[i] = 0;
-            xPos_04[i]  = ofRandom(ofGetWidth());
-            yPos_04[i]  = ofRandom(ofGetHeight());
+            xPos_04[i]  = ofRandom(fbo[4].getWidth());
+            yPos_04[i]  = ofRandom(fbo[4].getHeight());
             r[i] = ofRandom(255);
             g[i] = ofRandom(255);
             b[i] = ofRandom(255);
@@ -585,6 +590,7 @@ void ofApp::drawFboTest_05(){
         barScale = ofRandom(1,5);
         
     }
+    
 }
 
 //--------------------------------------------------------------
@@ -600,10 +606,10 @@ void ofApp::drawFboTest_06(){
         ofSetColor(r[i], g[i], b[i]);
         ofFill();
         
-        ofRect(xPos_06[i], 0, width_06[i], ofGetHeight());
+        ofRect(xPos_06[i], 0, width_06[i], fbo[6].getHeight());
         xPos_06[i] += vel_06[i];
-        if(xPos_06[i] > ofGetWidth() || xPos_06[i] < 0){
-            xPos_06[i]  = ofRandom(ofGetWidth());
+        if(xPos_06[i] > fbo[6].getWidth() || xPos_06[i] < 0){
+            xPos_06[i]  = ofRandom(fbo[6].getWidth());
             r[i] = ofRandom(255);
             g[i] = ofRandom(255);
             b[i] = ofRandom(255);
@@ -611,7 +617,7 @@ void ofApp::drawFboTest_06(){
         }
         
         if(width_06[i] > 50){
-            for (int k = 0; k < ofGetHeight(); k++) {
+            for (int k = 0; k < fbo[6].getHeight(); k++) {
                 for (int j = xPos_06[i]; j<width_06[i]/20; j++) {
                     ofSetColor(255);
                     ofRect(j*20, k*20, 10, 10);
@@ -707,7 +713,7 @@ void ofApp::drawFboTest_09(){
     ofClear(255,255,255, 0);
     
     cam[2].begin();
-    ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
+    ofTranslate(fbo[9].getWidth()/2, fbo[9].getHeight()/2);
     
     for (int i = 0; i < 22; i++) {
         for (int j = 0; j < 22; j++) {
@@ -781,7 +787,15 @@ void ofApp::draw(){
     fbo[numFbos-1].draw(0, 0);
     
     // main buffer
-    fbo[numFbos-2].draw(1441,0);
+    if(readyToShow){
+        fbo[numFbos-2].draw(1441,0);
+    }
+    
+    //  test pattern
+    if(testPattern){
+        ofSetColor(0, 0, 255);
+        ofRect(1441, 0, fbo[numFbos-1].getWidth(), fbo[numFbos-1].getHeight());
+    }
     
 }
 
